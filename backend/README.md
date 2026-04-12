@@ -1,0 +1,136 @@
+# PulseGrid backend
+
+Production-style **FastAPI** backbone with **Neo4j AuraDB** as the primary graph database. The API returns mostly **placeholder responses** today; services and Cypher modules are the extension points for Phase 1.
+
+## Architecture
+
+`Flutter → FastAPI → Neo4j AuraDB → FastAPI → Flutter`
+
+- **FastAPI** — HTTP API under `app/`.
+- **Neo4j** — graph store for incidents, volunteers, hospitals, routes, and future matching (`ROUTE_TO`, `CAN_HELP_WITH`, etc.).
+- **Gemini** — scaffold only (`app/services/gemini_service.py`); keep keys server-side.
+
+## Prerequisites
+
+- Python **3.11+** recommended.
+- A **Neo4j AuraDB** instance (URI, username, password, database name).
+
+## Setup
+
+### 1. Create a virtual environment
+
+From the `backend/` directory:
+
+```bash
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+On Windows:
+
+```bash
+.venv\Scripts\activate
+```
+
+### 2. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Configure environment
+
+Copy the example env file and fill in AuraDB credentials:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+
+| Variable           | Description                |
+| ------------------ | -------------------------- |
+| `NEO4J_URI`        | e.g. `neo4j+s://....databases.neo4j.io` |
+| `NEO4J_USERNAME`   | Usually `neo4j`          |
+| `NEO4J_PASSWORD`   | Aura-generated password  |
+| `NEO4J_DATABASE`   | Often `neo4j` (not the instance id from the URI). If Aura says that database does not exist, use `AUTO`, `__DEFAULT__`, or empty to use the server home database, or the exact graph name from the console. |
+
+Optional:
+
+| Variable          | Description        |
+| ----------------- | ------------------ |
+| `GEMINI_API_KEY`  | For future AI routes |
+
+### 4. Apply graph schema (constraints)
+
+In **Neo4j Browser** (Aura console), paste and run the contents of:
+
+`app/db/graph_schema.cypher`
+
+This creates `UNIQUE` constraints on `id` for each node label.
+
+### 5. Seed the graph
+
+Still from `backend/` with the virtual environment active:
+
+```bash
+python seed_data_loader.py
+```
+
+Equivalent:
+
+```bash
+python -m app.db.seed_data_loader
+```
+
+The loader reads JSON from `data/seed/` and uses **MERGE** so it is safe to re-run.
+
+### 6. Run the API
+
+```bash
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+- Root: `GET /` → `{"message":"PulseGrid backend running"}`  
+- Neo4j check: `GET /health/neo4j`  
+- Core modules: `/incidents`, `/volunteers`, `/organizations/{id}/…`, `/support/contacts`, `/rewards`, `/ai/…`
+- **Organization ops:** `POST /auth/register-organization`, then `GET /organizations/{organization_id}/overview` and `/incidents` for the partner dashboard.
+- **Admin inspection** (optional dev / deep link): `POST /auth/admin-login`, then `GET /admin/overview` with header `X-Admin-Session`. Not part of the main three-role app flow.
+
+### Admin curl “shows nothing”
+
+`curl -s` prints **no progress** until the HTTP body returns. `GET /admin/overview` (and other admin reads) **wait on Neo4j**, so you may see a blank screen for many seconds if Aura is slow or unreachable.
+
+Use either:
+
+```bash
+curl -v --max-time 35 http://127.0.0.1:8000/admin/overview -H "X-Admin-Session: admin-hackathon"
+```
+
+(`-v` shows connection progress; `--max-time` aborts if the server never answers.)
+
+After `* Request completely sent off`, curl is **waiting for the HTTP response** — the API is usually in Neo4j. Use `--max-time 60` (or higher) the first time; admin overview uses a **transaction timeout** (`NEO4J_TRANSACTION_TIMEOUT`, default **25s**) so you should get JSON or a **500** rather than hanging forever.
+
+Bolt tuning: `NEO4J_CONNECTION_TIMEOUT` (TCP/TLS, default **15s**), `NEO4J_CONNECTION_ACQUISITION_TIMEOUT` (pool wait, default **25s**). Restart uvicorn after changing `.env`.
+
+## Neo4j AuraDB quick start
+
+1. Create a **Neo4j Aura** free tier database in the Neo4j cloud console.
+2. Note **URI**, **username**, **password**, and **database** (Aura often uses `neo4j` as the DB name).
+3. Open **Neo4j Browser** from the Aura UI and run `graph_schema.cypher`.
+4. Put credentials into `backend/.env` and run the seed script.
+
+## Project layout
+
+- `app/main.py` — FastAPI app, CORS, routers, lifecycle (closes Neo4j driver on shutdown).
+- `app/core/` — Settings and **singleton Neo4j driver** (`get_driver`, `close_driver`).
+- `app/db/` — `graph_schema.cypher`, **seed loader**, and `queries/` (Cypher strings).
+- `app/models/` — Pydantic request/response models.
+- `app/services/` — Thin domain scaffolding (priority, matching, routes, Gemini).
+- `app/api/routes/` — Routers (mocked handlers for now).
+- `data/seed/` — JSON MERGE sources.
+
+## Flutter client
+
+Point the Flutter app `API_BASE_URL` at `http://127.0.0.1:8000` (or your deployed host). Repositories remain mock-backed until Phase 1 swaps them to HTTP calls.

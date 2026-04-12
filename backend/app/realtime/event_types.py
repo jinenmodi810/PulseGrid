@@ -1,0 +1,11 @@
+"""Canonical realtime event names (JSON `event` field)."""
+
+INCIDENT_CREATED = "incident_created"
+INCIDENT_OPEN_IN_ZONE = "incident_open_in_zone"
+INCIDENT_ASSIGNED = "incident_assigned"
+INCIDENT_ACCEPTED = "incident_accepted"
+INCIDENT_COMPLETED = "incident_completed"
+INCIDENT_ESCALATED = "incident_escalated"
+ROUTE_BLOCKED = "route_blocked"
+DASHBOARD_UPDATED = "dashboard_updated"
+VOLUNTEER_CREDITS_UPDATED = "volunteer_credits_updated"

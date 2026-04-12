@@ -1,0 +1,30 @@
+[
+  {
+    "id": "user-demo-riverside",
+    "full_name": "Demo Riversider",
+    "phone": "+1-555-0100",
+    "preferred_language": "en",
+    "household_size": 3,
+    "elderly_count": 1,
+    "mobility_concern": false,
+    "oxygen_dependency": false,
+    "emergency_contact_name": "Jamie Rivers",
+    "emergency_contact_phone": "+1-555-0101",
+    "emergency_contact_relationship": "spouse",
+    "zone_id": "zone-riverside"
+  },
+  {
+    "id": "user-demo-north",
+    "full_name": "Demo North resident",
+    "phone": "+1-555-0200",
+    "preferred_language": "en",
+    "household_size": 2,
+    "elderly_count": 0,
+    "mobility_concern": true,
+    "oxygen_dependency": false,
+    "emergency_contact_name": "",
+    "emergency_contact_phone": "",
+    "emergency_contact_relationship": "",
+    "zone_id": "zone-north"
+  }
+]

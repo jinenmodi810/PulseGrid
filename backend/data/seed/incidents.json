@@ -1,0 +1,23 @@
+[
+  {
+    "id": "inc-001",
+    "title": "Localized flooding — Riverside",
+    "incident_type": "flood",
+    "status": "open",
+    "severity": "high",
+    "created_at": "2026-04-10T10:00:00Z",
+    "zone_id": "zone-riverside",
+    "people_count": 2,
+    "elderly": false,
+    "child_present": true,
+    "injury": false,
+    "oxygen_required": false,
+    "shelter_needed": true,
+    "food_needed": false,
+    "transport_needed": true,
+    "note": "Demo seed incident — water in lower units.",
+    "priority_score": 6.5,
+    "priority_label": "HIGH",
+    "reporter_user_id": "user-demo-riverside"
+  }
+]

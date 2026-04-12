@@ -1,0 +1,22 @@
+[
+  {
+    "id": "zone-riverside",
+    "name": "Riverside district",
+    "notes": "Demo zone — aligned with Flutter kAuthZoneIds"
+  },
+  {
+    "id": "zone-central",
+    "name": "Central district",
+    "notes": "Demo zone"
+  },
+  {
+    "id": "zone-north",
+    "name": "North district",
+    "notes": "Demo zone — org capacity seed"
+  },
+  {
+    "id": "zone-east",
+    "name": "East district",
+    "notes": "Demo zone"
+  }
+]

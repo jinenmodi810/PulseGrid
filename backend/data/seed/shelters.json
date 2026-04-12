@@ -1,0 +1,10 @@
+[
+  {
+    "id": "shelter-001",
+    "name": "Community Gym Shelter",
+    "capacity": 200,
+    "occupancy": 45,
+    "latitude": 37.78,
+    "longitude": -122.41
+  }
+]

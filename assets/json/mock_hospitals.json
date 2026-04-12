@@ -1,0 +1,9 @@
+[
+  {
+    "id": "hosp-001",
+    "name": "Central Medical",
+    "beds_available": 12,
+    "latitude": 37.77,
+    "longitude": -122.42
+  }
+]

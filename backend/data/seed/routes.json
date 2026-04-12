@@ -1,0 +1,11 @@
+[
+  {
+    "id": "edge-001",
+    "from_id": "inc-001",
+    "from_label": "Incident",
+    "to_id": "hosp-001",
+    "to_label": "Hospital",
+    "distance_km": 4.2,
+    "eta_minutes": 18
+  }
+]

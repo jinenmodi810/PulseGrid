@@ -1,0 +1,58 @@
+[
+  {
+    "id": "vol-001",
+    "display_name": "Alex Rivera",
+    "zone_id": "zone-riverside",
+    "skills": ["medical", "logistics"],
+    "skill_type": "logistics",
+    "support_types": ["transport", "medical", "shelter"],
+    "languages": ["en", "es"],
+    "transport_access": "private_vehicle",
+    "availability": "available",
+    "verified": true,
+    "credits": 120,
+    "trust_score": 0.88
+  },
+  {
+    "id": "vol-002",
+    "display_name": "Jordan Kim",
+    "zone_id": "zone-riverside",
+    "skills": ["food", "general"],
+    "skill_type": "general",
+    "support_types": ["food", "elderly_support"],
+    "languages": ["en"],
+    "transport_access": "bike",
+    "availability": "available",
+    "verified": true,
+    "credits": 45,
+    "trust_score": 0.72
+  },
+  {
+    "id": "vol-003",
+    "display_name": "Sam Okonkwo",
+    "zone_id": "zone-north",
+    "skills": ["logistics", "medical"],
+    "skill_type": "logistics",
+    "support_types": ["transport", "shelter"],
+    "languages": ["en"],
+    "transport_access": "van",
+    "availability": "available",
+    "verified": true,
+    "credits": 200,
+    "trust_score": 0.91
+  },
+  {
+    "id": "vol-004",
+    "display_name": "Taylor Morgan",
+    "zone_id": "zone-central",
+    "skills": ["general"],
+    "skill_type": "general",
+    "support_types": ["general_support"],
+    "languages": ["en", "fr"],
+    "transport_access": "none",
+    "availability": "available",
+    "verified": true,
+    "credits": 30,
+    "trust_score": 0.65
+  }
+]
