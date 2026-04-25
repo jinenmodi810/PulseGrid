@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.api.deps.auth_deps import auth_principal
+from app.api.deps.db_deps import get_db_optional
 from app.models.auth_models import AccessTokenResponse, AuthMeResponse
 from app.models.auth_requests import (
     AdminLoginRequest,
@@ -13,8 +15,6 @@ from app.models.auth_requests import (
     LoginVictimRequest,
     LoginVolunteerRequest,
     RegisterOrganizationAuthRequest,
-    RegisterUserRequest,
-    RegisterUserResponse,
     RegisterVictimAuthRequest,
     RegisterVolunteerAuthRequest,
 )
@@ -24,19 +24,18 @@ from app.services import auth_service
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-# Legacy affected-user registration (no password). Prefer POST /auth/register-victim.
-@router.post("/register-user", response_model=RegisterUserResponse)
-def post_register_user(body: RegisterUserRequest) -> RegisterUserResponse:
-    try:
-        return auth_neo4j_service.register_user(body)
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
-
-
 @router.post("/register-victim", response_model=AccessTokenResponse)
-def post_register_victim(body: RegisterVictimAuthRequest) -> AccessTokenResponse:
+def post_register_victim(
+    body: RegisterVictimAuthRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PostgreSQL is required for victim registration. Set DATABASE_URL in backend/.env.",
+        )
     try:
-        return auth_service.register_victim(body)
+        return auth_service.register_victim(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -44,9 +43,17 @@ def post_register_victim(body: RegisterVictimAuthRequest) -> AccessTokenResponse
 
 
 @router.post("/login-victim", response_model=AccessTokenResponse)
-def post_login_victim(body: LoginVictimRequest) -> AccessTokenResponse:
+def post_login_victim(
+    body: LoginVictimRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PostgreSQL is required for victim login. Set DATABASE_URL in backend/.env.",
+        )
     try:
-        return auth_service.login_victim(body)
+        return auth_service.login_victim(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -54,9 +61,17 @@ def post_login_victim(body: LoginVictimRequest) -> AccessTokenResponse:
 
 
 @router.post("/register-volunteer", response_model=AccessTokenResponse)
-def post_register_volunteer(body: RegisterVolunteerAuthRequest) -> AccessTokenResponse:
+def post_register_volunteer(
+    body: RegisterVolunteerAuthRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PostgreSQL is required for volunteer registration. Set DATABASE_URL in backend/.env.",
+        )
     try:
-        return auth_service.register_volunteer(body)
+        return auth_service.register_volunteer(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -64,9 +79,17 @@ def post_register_volunteer(body: RegisterVolunteerAuthRequest) -> AccessTokenRe
 
 
 @router.post("/login-volunteer", response_model=AccessTokenResponse)
-def post_login_volunteer(body: LoginVolunteerRequest) -> AccessTokenResponse:
+def post_login_volunteer(
+    body: LoginVolunteerRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PostgreSQL is required for volunteer login. Set DATABASE_URL in backend/.env.",
+        )
     try:
-        return auth_service.login_volunteer(body)
+        return auth_service.login_volunteer(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -74,9 +97,17 @@ def post_login_volunteer(body: LoginVolunteerRequest) -> AccessTokenResponse:
 
 
 @router.post("/register-organization", response_model=AccessTokenResponse)
-def post_register_organization(body: RegisterOrganizationAuthRequest) -> AccessTokenResponse:
+def post_register_organization(
+    body: RegisterOrganizationAuthRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
+    if db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="PostgreSQL is required for organization registration. Set DATABASE_URL in backend/.env.",
+        )
     try:
-        return auth_service.register_organization(body)
+        return auth_service.register_organization(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -84,9 +115,12 @@ def post_register_organization(body: RegisterOrganizationAuthRequest) -> AccessT
 
 
 @router.post("/login-organization", response_model=AccessTokenResponse)
-def post_login_organization(body: LoginOrganizationRequest) -> AccessTokenResponse:
+def post_login_organization(
+    body: LoginOrganizationRequest,
+    db: Session | None = Depends(get_db_optional),
+) -> AccessTokenResponse:
     try:
-        return auth_service.login_organization(body)
+        return auth_service.login_organization(body, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -94,9 +128,12 @@ def post_login_organization(body: LoginOrganizationRequest) -> AccessTokenRespon
 
 
 @router.get("/me", response_model=AuthMeResponse)
-def get_auth_me(principal: dict[str, str] = Depends(auth_principal)) -> AuthMeResponse:
+def get_auth_me(
+    principal: dict[str, str] = Depends(auth_principal),
+    db: Session | None = Depends(get_db_optional),
+) -> AuthMeResponse:
     try:
-        return auth_service.get_me(principal)
+        return auth_service.get_me(principal, db)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001

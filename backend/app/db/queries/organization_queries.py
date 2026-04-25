@@ -21,7 +21,7 @@ RETURN i.id AS incident_id,
        coalesce(i.decision_summary, '') AS decision_summary,
        coalesce(i.assigned_volunteer_name, '') <> '' AS volunteer_support_active,
        i.created_at AS created_at
-ORDER BY i.created_at DESC NULLS LAST
+ORDER BY i.created_at IS NULL ASC, i.created_at DESC
 """
 
 COUNT_ORG_INCIDENTS = """

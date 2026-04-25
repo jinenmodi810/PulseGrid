@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.neo4j_client import get_driver, managed_neo4j_session
@@ -15,6 +17,9 @@ from app.models.volunteer_task_requests import (
     VolunteerRewardSnapshot,
     VolunteerTaskItem,
 )
+from app.services.outbox_service import apply_volunteer_task_completion_in_session
+
+_log = logging.getLogger("pulsegrid.volunteer_tasks")
 
 
 def _node_props(node: Any) -> dict[str, Any]:
@@ -101,7 +106,7 @@ def accept_task(*, volunteer_id: str, incident_id: str) -> AcceptTaskResponse:
     return AcceptTaskResponse(**row)
 
 
-def complete_task(*, volunteer_id: str, incident_id: str) -> CompleteTaskResponse:
+def complete_task(*, volunteer_id: str, incident_id: str, db: Session | None = None) -> CompleteTaskResponse:
     driver = get_driver()
     settings = get_settings()
 
@@ -122,6 +127,22 @@ def complete_task(*, volunteer_id: str, incident_id: str) -> CompleteTaskRespons
         row = session.execute_write(write)
     if row is None:
         raise HTTPException(status_code=400, detail="Cannot complete this task (check assignment or already resolved).")
+    if db is not None:
+        try:
+            apply_volunteer_task_completion_in_session(
+                db=db,
+                volunteer_id=row["volunteer_id"],
+                incident_id=row["incident_id"],
+                incident_status=row["status"],
+                credits=row["credits"],
+                trust_score=row["trust_score"],
+            )
+        except Exception:  # noqa: BLE001
+            db.rollback()
+            _log.exception(
+                "volunteer_task_outbox_pg_tx_failed",
+                extra={"volunteer_id": row["volunteer_id"], "incident_id": row["incident_id"]},
+            )
     snap = VolunteerRewardSnapshot(
         volunteer_id=row["volunteer_id"],
         credits=row["credits"],

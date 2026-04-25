@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../../app/providers.dart';
 import '../../../../core/services/realtime_service.dart';
 import '../../../help_request/presentation/providers/help_request_providers.dart';
 import 'ai_guidance_providers.dart';
@@ -11,7 +12,10 @@ import 'ai_guidance_providers.dart';
 final incidentRealtimeProvider = StreamProvider.autoDispose.family<int, String>((ref, incidentId) async* {
   if (incidentId.isEmpty) return;
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/incidents/${Uri.encodeComponent(incidentId)}');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/incidents/${Uri.encodeComponent(incidentId)}')
+      .replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);

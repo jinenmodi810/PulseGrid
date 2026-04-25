@@ -1,7 +1,8 @@
 """Dashboard metrics from Neo4j."""
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.api.deps.auth_deps import auth_principal
 from app.models.auth_requests import DashboardSummaryResponse
 from app.services import auth_neo4j_service
 
@@ -9,7 +10,7 @@ router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/summary", response_model=DashboardSummaryResponse)
-def get_dashboard_summary() -> DashboardSummaryResponse:
+def get_dashboard_summary(_: dict[str, str] = Depends(auth_principal)) -> DashboardSummaryResponse:
     try:
         data = auth_neo4j_service.dashboard_summary()
         return DashboardSummaryResponse(**data)

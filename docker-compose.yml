@@ -1,0 +1,31 @@
+# Local Redpanda (Kafka API) for PulseGrid domain outbox publishing.
+# Start: docker compose up -d
+# Broker for host apps: localhost:19092
+# Set in backend/.env: KAFKA_BOOTSTRAP_SERVERS=localhost:19092
+
+services:
+  redpanda:
+    image: docker.redpanda.com/redpandadata/redpanda:v24.1.11
+    container_name: pulsegrid-redpanda
+    command:
+      - redpanda
+      - start
+      - --smp
+      - "1"
+      - --memory
+      - 512M
+      - --overprovisioned
+      - --node-id
+      - "0"
+      - --kafka-addr
+      - internal://0.0.0.0:9092,external://0.0.0.0:19092
+      - --advertise-kafka-addr
+      - internal://redpanda:9092,external://localhost:19092
+    ports:
+      - "19092:19092"
+      - "9644:9644"
+    volumes:
+      - redpanda_data:/var/lib/redpanda/data
+
+volumes:
+  redpanda_data:

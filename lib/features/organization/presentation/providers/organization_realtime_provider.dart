@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../../app/providers.dart';
 import '../../../../core/services/realtime_service.dart';
 import 'organization_providers.dart';
 
@@ -21,7 +22,10 @@ void _invalidateOrganizationSideEffects(Ref ref) {
 final organizationRealtimeProvider = StreamProvider.autoDispose.family<int, String>((ref, organizationId) async* {
   if (organizationId.isEmpty) return;
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/organizations/${Uri.encodeComponent(organizationId)}');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/organizations/${Uri.encodeComponent(organizationId)}')
+      .replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);
@@ -51,7 +55,10 @@ final organizationRealtimeBySessionProvider = StreamProvider.autoDispose<int>((r
     return;
   }
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/organizations/${Uri.encodeComponent(oid)}');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/organizations/${Uri.encodeComponent(oid)}')
+      .replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);

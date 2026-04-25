@@ -9,9 +9,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class Settings(BaseModel):
-    """Runtime configuration. Neo4j AuraDB is the primary graph store."""
+    """Runtime configuration: PostgreSQL is the system of record; Neo4j is a projection graph."""
 
     model_config = ConfigDict(extra="ignore")
+
+    # --- PostgreSQL (system of record) ---
+    # e.g. postgresql+psycopg2://jinenmodi@localhost:5432/pulsegrid_db
+    DATABASE_URL: str | None = None
+    # When true, exposes POST /data/users for local/integration testing (disable in production).
+    PG_WRITE_ROUTES_ENABLED: bool = Field(default=False)
 
     NEO4J_URI: str
     NEO4J_USERNAME: str
@@ -37,6 +43,14 @@ class Settings(BaseModel):
     # Default only for local demos; override in production.
     JWT_SECRET: str = Field(default="pulsegrid-dev-jwt-secret-change-in-production")
     JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=10080)  # 7 days default for MVP demos
+
+    # --- Event outbox (PostgreSQL) + Kafka/Redpanda (optional) ---
+    # If unset, outbox rows stay pending; API writes still succeed; run the publisher when broker is up.
+    KAFKA_BOOTSTRAP_SERVERS: str | None = None
+    KAFKA_OUTBOX_TOPIC: str = Field(default="pulsegrid.domain.events")
+    OUTBOX_MAX_PUBLISH_ATTEMPTS: int = Field(default=10)
+    OUTBOX_PUBLISHER_BATCH_SIZE: int = Field(default=50)
+    OUTBOX_PUBLISHER_POLL_SECONDS: float = Field(default=2.0)
 
     def resolved_neo4j_database(self) -> str | None:
         """Database name for Bolt `session(database=...)`, or None for server default / home DB."""

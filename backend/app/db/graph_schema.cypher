@@ -48,3 +48,14 @@ FOR (n:Reward) REQUIRE n.id IS UNIQUE;
 
 CREATE CONSTRAINT organization_id_unique IF NOT EXISTS
 FOR (n:Organization) REQUIRE n.id IS UNIQUE;
+
+// --- Identity uniqueness (registration/login safety) ---
+
+CREATE CONSTRAINT user_email_unique IF NOT EXISTS
+FOR (n:User) REQUIRE n.email IS UNIQUE;
+
+CREATE CONSTRAINT volunteer_email_unique IF NOT EXISTS
+FOR (n:Volunteer) REQUIRE n.email IS UNIQUE;
+
+CREATE CONSTRAINT organization_contact_email_unique IF NOT EXISTS
+FOR (n:Organization) REQUIRE n.contact_email IS UNIQUE;

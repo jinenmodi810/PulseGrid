@@ -34,3 +34,11 @@ def auth_principal(token: Annotated[str, Depends(require_bearer_token)]) -> dict
     if not sub or not role:
         raise HTTPException(status_code=401, detail="Invalid session.")
     return {"sub": str(sub), "role": str(role)}
+
+
+def require_role(principal: dict[str, str], *roles: str) -> None:
+    """Raise 403 when principal role is not one of expected roles."""
+    expected = {r.strip().lower() for r in roles if r and r.strip()}
+    got = str(principal.get("role") or "").strip().lower()
+    if expected and got not in expected:
+        raise HTTPException(status_code=403, detail="Insufficient role permissions.")

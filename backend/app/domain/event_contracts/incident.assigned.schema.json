@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "incident.assigned envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "schema_version",
+    "aggregate_type",
+    "aggregate_id",
+    "enqueued_at",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": { "const": "incident.assigned" },
+    "event_version": { "type": "integer", "minimum": 1 },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "aggregate_type": { "const": "incident" },
+    "aggregate_id": { "type": "string", "minLength": 1 },
+    "enqueued_at": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["incident_id", "volunteer_id", "source", "occurred_at"],
+      "properties": {
+        "incident_id": { "type": "string", "minLength": 1 },
+        "volunteer_id": { "type": "string", "minLength": 1 },
+        "source": { "type": "string", "minLength": 1 },
+        "occurred_at": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

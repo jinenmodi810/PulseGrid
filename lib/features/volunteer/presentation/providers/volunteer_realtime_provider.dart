@@ -26,7 +26,10 @@ void _invalidateVolunteerSideEffects(Ref ref) {
 final volunteerRealtimeProvider = StreamProvider.autoDispose.family<int, String>((ref, volunteerId) async* {
   if (volunteerId.isEmpty) return;
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/volunteers/${Uri.encodeComponent(volunteerId)}');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/volunteers/${Uri.encodeComponent(volunteerId)}')
+      .replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);
@@ -57,7 +60,10 @@ final volunteerRealtimeBySessionProvider = StreamProvider.autoDispose<int>((ref)
     return;
   }
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/volunteers/${Uri.encodeComponent(id)}');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/volunteers/${Uri.encodeComponent(id)}')
+      .replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);

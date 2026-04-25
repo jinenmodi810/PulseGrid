@@ -359,7 +359,7 @@ def create_incident(body: CreateIncidentRequest) -> CreateIncidentResponse:
     org_rej = [RejectedOrganizationCandidate(**r) for r in payload.get("rejected_organizations") or []]
     ec = payload.get("emergency_contact")
     tr = list(payload.get("tier_reasons") or [])
-    return CreateIncidentResponse(
+    resp = CreateIncidentResponse(
         incident_id=payload["incident_id"],
         zone_id=str(payload.get("zone_id") or ""),
         status=payload["status"],
@@ -381,6 +381,10 @@ def create_incident(body: CreateIncidentRequest) -> CreateIncidentResponse:
         emergency_contact=ec if isinstance(ec, EmergencyContactResponse) else None,
         profile_defaults_used=list(payload.get("profile_defaults_used") or []),
     )
+    from app.services.outbox_service import record_incident_lifecycle_outbox
+
+    record_incident_lifecycle_outbox(resp, reporter_user_id=body.user_id)
+    return resp
 
 
 def get_incident_detail(incident_id: str) -> IncidentDetailResponse | None:

@@ -11,7 +11,7 @@ class AccessTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     role: Literal["victim", "volunteer", "organization"]
-    id: str = Field(description="Neo4j graph id for the principal")
+    id: str = Field(description="Canonical account id (UUID string); same value is used in Neo4j :User/:Volunteer id")
 
 
 class AuthMeResponse(BaseModel):

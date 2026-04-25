@@ -3,13 +3,16 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import '../../../../app/providers.dart';
 import '../../../../core/services/realtime_service.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 
 /// Live dashboard counter refresh. Silent on connection errors (REST refresh still works).
 final dashboardRealtimeProvider = StreamProvider.autoDispose<int>((ref) async* {
   final wsBase = ref.watch(wsBaseUrlProvider);
-  final uri = Uri.parse('$wsBase/ws/dashboard');
+  final token = await ref.watch(sessionStoreProvider).getAuthToken();
+  if (token == null || token.isEmpty) return;
+  final uri = Uri.parse('$wsBase/ws/dashboard').replace(queryParameters: {'token': token});
   WebSocketChannel? channel;
   try {
     channel = WebSocketChannel.connect(uri);

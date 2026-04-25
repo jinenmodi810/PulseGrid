@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "incident.created envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "schema_version",
+    "aggregate_type",
+    "aggregate_id",
+    "enqueued_at",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": { "const": "incident.created" },
+    "event_version": { "type": "integer", "minimum": 1 },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "aggregate_type": { "const": "incident" },
+    "aggregate_id": { "type": "string", "minLength": 1 },
+    "enqueued_at": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "incident_id",
+        "zone_id",
+        "status",
+        "priority_label",
+        "reporter_user_id",
+        "occurred_at",
+        "rejection_count"
+      ],
+      "properties": {
+        "incident_id": { "type": "string", "minLength": 1 },
+        "zone_id": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "priority_label": { "type": "string", "minLength": 1 },
+        "reporter_user_id": { "type": "string", "minLength": 1 },
+        "occurred_at": { "type": "string", "minLength": 1 },
+        "rejection_count": { "type": "integer", "minimum": 0 }
+      }
+    }
+  }
+}

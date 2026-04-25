@@ -16,6 +16,7 @@ from app.api.routes import (
     ai,
     auth_routes,
     dashboard_routes,
+    data_routes,
     debug_routes,
     incident_routes,
     organizations,
@@ -47,6 +48,9 @@ async def lifespan(_: FastAPI):
             db,
         )
     yield
+    from app.db.sql.session import dispose_sql_engine
+
+    dispose_sql_engine()
     close_driver()
 
 
@@ -112,6 +116,7 @@ def debug_neo4j_health() -> dict[str, str | bool | None]:
 
 app.include_router(auth_routes.router)
 app.include_router(debug_routes.router)
+app.include_router(data_routes.router)
 app.include_router(users.router)
 # Neo4j-backed admin inspection: GET /admin/* (single mount). Client sends X-Admin-Session
 # matching settings.ADMIN_SESSION_MARKER after POST /auth/admin-login.

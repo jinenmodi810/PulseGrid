@@ -13,8 +13,6 @@ from app.models.auth_requests import (
     AdminLoginResponse,
     RegisterOrganizationRequest,
     RegisterOrganizationResponse,
-    RegisterUserRequest,
-    RegisterUserResponse,
     RegisterVolunteerRequest,
     RegisterVolunteerResponse,
 )
@@ -34,29 +32,6 @@ def _run_write(cypher: str, params: dict[str, Any]) -> dict[str, Any]:
 
     with managed_neo4j_session(driver, settings) as session:
         return session.execute_write(work)
-
-
-def register_user(body: RegisterUserRequest) -> RegisterUserResponse:
-    user_id = str(uuid.uuid4())
-    household = body.household_size if body.household_size is not None else body.family_size
-    params = {
-        "user_id": user_id,
-        "full_name": body.full_name.strip(),
-        "phone": body.phone.strip(),
-        "preferred_language": (body.preferred_language or "en").strip() or "en",
-        "household_size": household,
-        "family_size": body.family_size,
-        "elderly_count": int(body.elderly_count),
-        "mobility_concern": bool(body.mobility_concern),
-        "oxygen_dependency": bool(body.oxygen_dependency),
-        "emergency_contact_name": body.emergency_contact_name.strip(),
-        "emergency_contact_phone": body.emergency_contact_phone.strip(),
-        "emergency_contact_relationship": (body.emergency_contact_relationship or "").strip(),
-        "zone_id": body.home_zone_id.strip(),
-        "zone_name": body.home_zone_id.strip(),
-    }
-    row = _run_write(auth_queries.MERGE_USER_AND_ZONE, params)
-    return RegisterUserResponse(user_id=row.get("user_id", user_id), zone_id=row.get("zone_id", body.home_zone_id))
 
 
 def register_volunteer(body: RegisterVolunteerRequest) -> RegisterVolunteerResponse:

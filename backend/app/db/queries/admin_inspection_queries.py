@@ -105,7 +105,7 @@ RETURN i.id AS incident_id,
        coalesce(i.food_needed, false) AS food_needed,
        coalesce(i.transport_needed, false) AS transport_needed,
        coalesce(i.note, '') AS note
-ORDER BY i.created_at DESC NULLS LAST, incident_id DESC
+ORDER BY i.created_at IS NULL ASC, i.created_at DESC, incident_id DESC
 """
 
 GET_INCIDENT_ADMIN = """

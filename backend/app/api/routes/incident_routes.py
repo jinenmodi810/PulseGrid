@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from sqlalchemy.orm import Session
 
+from app.api.deps.auth_deps import auth_principal, require_role
+from app.api.deps.db_deps import get_db_optional
 from app.models.incident import IncidentRead
 from app.models.incident_requests import (
     CreateIncidentRequest,
@@ -23,6 +26,7 @@ from app.models.volunteer_task_requests import (
 )
 from app.realtime import broadcaster
 from app.services import coordinator_service, incident_service, volunteer_task_service
+from app.services.outbox_service import record_coordinator_assigned, record_incident_accepted_outbox
 
 router = APIRouter(prefix="/incidents", tags=["incidents"])
 
@@ -42,7 +46,13 @@ def post_voice_intake_preview() -> VoiceSosIntakePreviewResponse:
 async def post_create_incident(
     body: CreateIncidentRequest,
     background_tasks: BackgroundTasks,
+    principal: dict[str, str] = Depends(auth_principal),
 ) -> CreateIncidentResponse:
+    require_role(principal, "victim")
+    uid = str(principal.get("sub") or "").strip()
+    if not uid:
+        raise HTTPException(status_code=401, detail="Invalid session.")
+    body = body.model_copy(update={"user_id": uid})
     try:
         resp = incident_service.create_incident(body)
     except Exception as exc:  # noqa: BLE001
@@ -52,7 +62,7 @@ async def post_create_incident(
 
 
 @router.get("/{incident_id}", response_model=IncidentDetailResponse)
-def get_incident(incident_id: str) -> IncidentDetailResponse:
+def get_incident(incident_id: str, _: dict[str, str] = Depends(auth_principal)) -> IncidentDetailResponse:
     detail = incident_service.get_incident_detail(incident_id)
     if detail is None:
         raise HTTPException(status_code=404, detail="Incident not found")
@@ -64,13 +74,18 @@ async def post_accept_task(
     incident_id: str,
     body: VolunteerIdBody,
     background_tasks: BackgroundTasks,
+    principal: dict[str, str] = Depends(auth_principal),
 ) -> AcceptTaskResponse:
+    require_role(principal, "volunteer")
+    if str(principal.get("sub") or "").strip() != str(body.volunteer_id).strip():
+        raise HTTPException(status_code=403, detail="Volunteer id does not match session.")
     try:
         resp = volunteer_task_service.accept_task(volunteer_id=body.volunteer_id, incident_id=incident_id)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    record_incident_accepted_outbox(resp, volunteer_id=body.volunteer_id)
     background_tasks.add_task(broadcaster.after_incident_accepted, volunteer_id=body.volunteer_id, resp=resp)
     return resp
 
@@ -80,9 +95,18 @@ async def post_complete_task(
     incident_id: str,
     body: VolunteerIdBody,
     background_tasks: BackgroundTasks,
+    principal: dict[str, str] = Depends(auth_principal),
+    db: Session | None = Depends(get_db_optional),
 ) -> CompleteTaskResponse:
+    require_role(principal, "volunteer")
+    if str(principal.get("sub") or "").strip() != str(body.volunteer_id).strip():
+        raise HTTPException(status_code=403, detail="Volunteer id does not match session.")
     try:
-        resp = volunteer_task_service.complete_task(volunteer_id=body.volunteer_id, incident_id=incident_id)
+        resp = volunteer_task_service.complete_task(
+            volunteer_id=body.volunteer_id,
+            incident_id=incident_id,
+            db=db,
+        )
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
@@ -96,13 +120,16 @@ async def post_reassign(
     incident_id: str,
     body: ReassignRequest,
     background_tasks: BackgroundTasks,
+    principal: dict[str, str] = Depends(auth_principal),
 ) -> CoordinatorIncidentActionResponse:
+    require_role(principal, "organization")
     try:
         resp = coordinator_service.reassign_incident(incident_id=incident_id, new_volunteer_id=body.new_volunteer_id)
     except HTTPException:
         raise
     except Exception as exc:  # noqa: BLE001
         raise HTTPException(status_code=500, detail=str(exc)) from exc
+    record_coordinator_assigned(incident_id=incident_id, new_volunteer_id=body.new_volunteer_id)
     background_tasks.add_task(
         broadcaster.after_incident_reassigned,
         incident_id=incident_id,
@@ -117,7 +144,9 @@ async def post_escalate(
     incident_id: str,
     background_tasks: BackgroundTasks,
     body: CoordinatorNoteRequest = CoordinatorNoteRequest(),
+    principal: dict[str, str] = Depends(auth_principal),
 ) -> CoordinatorIncidentActionResponse:
+    require_role(principal, "organization")
     note = body.note
     try:
         resp = coordinator_service.escalate_incident(incident_id=incident_id, note=note)
@@ -134,7 +163,9 @@ async def post_block_route(
     incident_id: str,
     background_tasks: BackgroundTasks,
     body: CoordinatorNoteRequest = CoordinatorNoteRequest(),
+    principal: dict[str, str] = Depends(auth_principal),
 ) -> CoordinatorIncidentActionResponse:
+    require_role(principal, "organization")
     reason = body.note
     try:
         resp = coordinator_service.block_route(incident_id=incident_id, reason=reason)
@@ -145,9 +176,8 @@ async def post_block_route(
     background_tasks.add_task(broadcaster.after_route_blocked, incident_id=incident_id, resp=resp)
     return resp
 
-
 @router.get("/", response_model=list[IncidentRead])
-def list_incidents() -> list[IncidentRead]:
+def list_incidents(_: dict[str, str] = Depends(auth_principal)) -> list[IncidentRead]:
     rows = incident_service.list_incidents()
     out: list[IncidentRead] = []
     for r in rows:
@@ -166,3 +196,4 @@ def list_incidents() -> list[IncidentRead]:
             )
         )
     return out
+

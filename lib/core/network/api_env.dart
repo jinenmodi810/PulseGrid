@@ -1,17 +1,32 @@
 import 'dart:io';
 
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 import '../../app/constants/api_constants.dart';
 
-/// Resolves API base URL: `.env` wins; otherwise platform-appropriate localhost.
+/// ===============================================
+/// MODE: iOS SIMULATOR / LOCAL DEVELOPMENT
+/// -----------------------------------------------
+/// - iOS Simulator can access Mac via 127.0.0.1
+/// - Android emulator uses 10.0.2.2
+/// - Backend expected on port 8002
+/// ===============================================
 String resolveApiBaseUrl() {
+  // 1. If .env is set, it overrides everything
   final fromEnv = dotenv.maybeGet(ApiConstants.envApiBaseUrl)?.trim();
   if (fromEnv != null && fromEnv.isNotEmpty) {
     return fromEnv.replaceAll(RegExp(r'/+$'), '');
   }
+
+  // 2. Android Emulator
   if (Platform.isAndroid) {
-    return 'http://10.0.2.2:8000';
+    return 'http://10.0.2.2:8002';
   }
-  return 'http://127.0.0.1:8000';
+
+  // 3. iOS Simulator (runs on Mac)
+  if (Platform.isIOS) {
+    return 'http://127.0.0.1:8002';
+  }
+
+  // 4. Default fallback
+  return 'http://127.0.0.1:8002';
 }

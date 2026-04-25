@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from app.api.deps.auth_deps import auth_principal, require_role
 from app.models.volunteer import VolunteerRead
 from app.models.volunteer_task_requests import VolunteerTaskItem
 from app.services import volunteer_task_service
@@ -44,7 +45,8 @@ def _to_volunteer_read(row: dict) -> VolunteerRead:
 
 
 @router.get("/", response_model=list[VolunteerRead])
-def list_volunteers() -> list[VolunteerRead]:
+def list_volunteers(principal: dict[str, str] = Depends(auth_principal)) -> list[VolunteerRead]:
+    require_role(principal, "volunteer", "organization", "victim")
     try:
         rows = volunteer_task_service.list_volunteers_brief_rows()
         return [_to_volunteer_read(r) for r in rows]
@@ -53,7 +55,10 @@ def list_volunteers() -> list[VolunteerRead]:
 
 
 @router.get("/{volunteer_id}/tasks", response_model=list[VolunteerTaskItem])
-def get_volunteer_tasks(volunteer_id: str) -> list[VolunteerTaskItem]:
+def get_volunteer_tasks(volunteer_id: str, principal: dict[str, str] = Depends(auth_principal)) -> list[VolunteerTaskItem]:
+    require_role(principal, "volunteer")
+    if str(principal.get("sub") or "").strip() != str(volunteer_id).strip():
+        raise HTTPException(status_code=403, detail="Volunteer id does not match session.")
     try:
         return volunteer_task_service.list_volunteer_tasks(volunteer_id)
     except Exception as exc:  # noqa: BLE001
@@ -61,7 +66,10 @@ def get_volunteer_tasks(volunteer_id: str) -> list[VolunteerTaskItem]:
 
 
 @router.get("/{volunteer_id}", response_model=VolunteerRead)
-def get_volunteer(volunteer_id: str) -> VolunteerRead:
+def get_volunteer(volunteer_id: str, principal: dict[str, str] = Depends(auth_principal)) -> VolunteerRead:
+    require_role(principal, "volunteer")
+    if str(principal.get("sub") or "").strip() != str(volunteer_id).strip():
+        raise HTTPException(status_code=403, detail="Volunteer id does not match session.")
     row = volunteer_task_service.get_volunteer_row(volunteer_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Volunteer not found")
