@@ -1,0 +1,2 @@
+2026-04-26 15:05:09,880 [pulsegrid.outbox_publisher] INFO outbox_publisher_starting
+2026-04-26 15:05:09,880 [pulsegrid.pg] INFO initializing_postgresql_engine

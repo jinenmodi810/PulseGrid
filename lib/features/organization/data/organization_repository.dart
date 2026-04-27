@@ -28,6 +28,19 @@ class OrganizationRepository {
     return e.message ?? 'Request failed.';
   }
 
+  String _analyticsMessage(DioException e) {
+    final status = e.response?.statusCode;
+    final data = e.response?.data;
+    if (status == 503) {
+      final detail = data is Map ? data['detail']?.toString() : null;
+      if (detail != null && detail.toLowerCase().contains('gold')) {
+        return 'Analytics will appear after operational data is processed.';
+      }
+      return 'Analytics will appear after operational data is processed.';
+    }
+    return _dioMessage(e);
+  }
+
   Future<Result<OrganizationOverviewDto, String>> getOverview(String organizationId) async {
     try {
       final res = await _api.client.get<Map<String, dynamic>>('/organizations/$organizationId/overview');
@@ -103,4 +116,91 @@ class OrganizationRepository {
   }
 
   Future<String?> sessionOrganizationId() => _orgId();
+
+  Future<Result<AnalyticsOverviewDto, String>> getAnalyticsOverview({
+    String? zoneId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final qp = <String, dynamic>{};
+      if (zoneId != null && zoneId.isNotEmpty) qp['zone_id'] = zoneId;
+      if (startDate != null && startDate.isNotEmpty) qp['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) qp['end_date'] = endDate;
+      final res = await _api.client.get<Map<String, dynamic>>('/analytics/overview', queryParameters: qp);
+      final data = res.data;
+      if (data == null) return const Failure('Empty analytics response');
+      return Success(AnalyticsOverviewDto.fromJson(data));
+    } on DioException catch (e) {
+      return Failure(_analyticsMessage(e));
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  Future<Result<List<IncidentsByZoneDto>, String>> getIncidentsByZone({
+    String? zoneId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final qp = <String, dynamic>{};
+      if (zoneId != null && zoneId.isNotEmpty) qp['zone_id'] = zoneId;
+      if (startDate != null && startDate.isNotEmpty) qp['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) qp['end_date'] = endDate;
+      final res = await _api.client.get<List<dynamic>>('/analytics/incidents-by-zone', queryParameters: qp);
+      final data = res.data ?? const [];
+      final rows = data
+          .map((e) => IncidentsByZoneDto.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(growable: false);
+      return Success(rows);
+    } on DioException catch (e) {
+      return Failure(_analyticsMessage(e));
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  Future<Result<TimeToResponseDto, String>> getTimeToResponse({
+    String? zoneId,
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final qp = <String, dynamic>{};
+      if (zoneId != null && zoneId.isNotEmpty) qp['zone_id'] = zoneId;
+      if (startDate != null && startDate.isNotEmpty) qp['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) qp['end_date'] = endDate;
+      final res = await _api.client.get<Map<String, dynamic>>('/analytics/time-to-response', queryParameters: qp);
+      final data = res.data;
+      if (data == null) return const Failure('Empty time-to-response response');
+      return Success(TimeToResponseDto.fromJson(data));
+    } on DioException catch (e) {
+      return Failure(_analyticsMessage(e));
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
+
+  Future<Result<List<OrganizationCapacityAnalyticsDto>, String>> getOrganizationCapacityAnalytics(
+    String organizationId, {
+    String? startDate,
+    String? endDate,
+  }) async {
+    try {
+      final qp = <String, dynamic>{'organization_id': organizationId};
+      if (startDate != null && startDate.isNotEmpty) qp['start_date'] = startDate;
+      if (endDate != null && endDate.isNotEmpty) qp['end_date'] = endDate;
+      final res = await _api.client.get<List<dynamic>>('/analytics/organization-capacity', queryParameters: qp);
+      final data = res.data ?? const [];
+      final rows = data
+          .map((e) => OrganizationCapacityAnalyticsDto.fromJson(Map<String, dynamic>.from(e as Map)))
+          .toList(growable: false);
+      return Success(rows);
+    } on DioException catch (e) {
+      return Failure(_analyticsMessage(e));
+    } catch (e) {
+      return Failure(e.toString());
+    }
+  }
 }

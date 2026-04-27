@@ -1,0 +1,30 @@
+{
+  "type": "record",
+  "name": "IncidentCreatedEnvelope",
+  "namespace": "pulsegrid.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_type", "type": "string"},
+    {"name": "event_version", "type": "int"},
+    {"name": "schema_version", "type": "int"},
+    {"name": "aggregate_type", "type": "string"},
+    {"name": "aggregate_id", "type": "string"},
+    {"name": "enqueued_at", "type": "string"},
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "IncidentCreatedPayload",
+        "fields": [
+          {"name": "incident_id", "type": "string"},
+          {"name": "zone_id", "type": "string"},
+          {"name": "status", "type": "string"},
+          {"name": "priority_label", "type": "string"},
+          {"name": "reporter_user_id", "type": "string"},
+          {"name": "occurred_at", "type": "string"},
+          {"name": "rejection_count", "type": "int"}
+        ]
+      }
+    }
+  ]
+}

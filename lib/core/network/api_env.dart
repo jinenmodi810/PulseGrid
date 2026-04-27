@@ -11,7 +11,15 @@ import '../../app/constants/api_constants.dart';
 /// - Backend expected on port 8002
 /// ===============================================
 String resolveApiBaseUrl() {
-  // 1. If .env is set, it overrides everything
+  // iOS Simulator should always hit localhost on the same Mac host.
+  // This avoids stale LAN-IP overrides from .env causing timeouts.
+  final isIosSimulator =
+      Platform.isIOS && Platform.environment.containsKey('SIMULATOR_DEVICE_NAME');
+  if (isIosSimulator) {
+    return 'http://127.0.0.1:8002';
+  }
+
+  // If .env is set, it overrides defaults for physical devices / custom setups.
   final fromEnv = dotenv.maybeGet(ApiConstants.envApiBaseUrl)?.trim();
   if (fromEnv != null && fromEnv.isNotEmpty) {
     return fromEnv.replaceAll(RegExp(r'/+$'), '');

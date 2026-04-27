@@ -1,0 +1,28 @@
+{
+  "type": "record",
+  "name": "VolunteerTaskCompletedEnvelope",
+  "namespace": "pulsegrid.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_type", "type": "string"},
+    {"name": "event_version", "type": "int"},
+    {"name": "schema_version", "type": "int"},
+    {"name": "aggregate_type", "type": "string"},
+    {"name": "aggregate_id", "type": "string"},
+    {"name": "enqueued_at", "type": "string"},
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "VolunteerTaskCompletedPayload",
+        "fields": [
+          {"name": "volunteer_id", "type": "string"},
+          {"name": "incident_id", "type": "string"},
+          {"name": "credits", "type": "int"},
+          {"name": "trust_score", "type": "double"},
+          {"name": "occurred_at", "type": "string"}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/Users/jinenmodi/PulseGrid/backend/app/jobs/bronze_ingestor.py", line 352, in <module>
+    main_loop()
+    ~~~~~~~~~^^
+  File "/Users/jinenmodi/PulseGrid/backend/app/jobs/bronze_ingestor.py", line 323, in main_loop
+    raise RuntimeError("KAFKA_BOOTSTRAP_SERVERS is required for bronze ingestion.")
+RuntimeError: KAFKA_BOOTSTRAP_SERVERS is required for bronze ingestion.

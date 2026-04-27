@@ -14,6 +14,7 @@ from app.db.sql.models.event_outbox import EventOutbox
 from app.db.sql.models.responder_profile import ResponderProfile
 from app.db.sql.session import get_session_factory
 from app.domain import outbox_event_types as T
+from app.domain.event_streaming import event_version_for
 from app.models.incident_requests import CreateIncidentResponse
 from app.models.volunteer_task_requests import AcceptTaskResponse
 
@@ -206,6 +207,7 @@ def envelope_for_kafka(row: EventOutbox) -> bytes:
     body = {
         "event_id": str(row.id),
         "event_type": row.event_type,
+        "event_version": event_version_for(row.event_type),
         "aggregate_type": row.aggregate_type,
         "aggregate_id": row.aggregate_id,
         "schema_version": 1,

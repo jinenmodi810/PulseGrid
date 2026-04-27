@@ -18,6 +18,8 @@ class Settings(BaseModel):
     DATABASE_URL: str | None = None
     # When true, exposes POST /data/users for local/integration testing (disable in production).
     PG_WRITE_ROUTES_ENABLED: bool = Field(default=False)
+    # CSV list of allowed CORS origins. Use "*" only for local throwaway demos.
+    CORS_ORIGINS: str = Field(default="http://127.0.0.1:8000,http://127.0.0.1:8002,http://localhost:8000,http://localhost:8002")
 
     NEO4J_URI: str
     NEO4J_USERNAME: str
@@ -48,9 +50,53 @@ class Settings(BaseModel):
     # If unset, outbox rows stay pending; API writes still succeed; run the publisher when broker is up.
     KAFKA_BOOTSTRAP_SERVERS: str | None = None
     KAFKA_OUTBOX_TOPIC: str = Field(default="pulsegrid.domain.events")
+    KAFKA_TOPIC_ROUTING_ENABLED: bool = Field(default=True)
+    KAFKA_TOPIC_INCIDENT_EVENTS: str = Field(default="pulsegrid.incident.events")
+    KAFKA_TOPIC_ORGANIZATION_EVENTS: str = Field(default="pulsegrid.organization.events")
+    KAFKA_TOPIC_VOLUNTEER_EVENTS: str = Field(default="pulsegrid.volunteer.events")
+    KAFKA_TOPIC_AUDIT_EVENTS: str = Field(default="pulsegrid.audit.events")
     OUTBOX_MAX_PUBLISH_ATTEMPTS: int = Field(default=10)
     OUTBOX_PUBLISHER_BATCH_SIZE: int = Field(default=50)
     OUTBOX_PUBLISHER_POLL_SECONDS: float = Field(default=2.0)
+
+    # --- Bronze lake ingestion (MinIO / S3-compatible) ---
+    BRONZE_KAFKA_CONSUMER_GROUP: str = Field(default="pulsegrid-bronze-consumer")
+    BRONZE_KAFKA_TOPICS: str = Field(
+        default="pulsegrid.incident.events,pulsegrid.organization.events,pulsegrid.volunteer.events"
+    )
+    BRONZE_BUCKET: str = Field(default="pulsegrid-bronze")
+    BRONZE_PREFIX: str = Field(default="events")
+    BRONZE_S3_ENDPOINT_URL: str = Field(default="http://localhost:9000")
+    BRONZE_S3_ACCESS_KEY: str = Field(default="minioadmin")
+    BRONZE_S3_SECRET_KEY: str = Field(default="minioadmin")
+    BRONZE_S3_REGION: str = Field(default="us-east-1")
+    BRONZE_S3_USE_SSL: bool = Field(default=False)
+    BRONZE_POLL_TIMEOUT_MS: int = Field(default=1000)
+    BRONZE_GZIP_ENABLED: bool = Field(default=False)
+
+    # --- Silver ETL (Bronze -> Silver Parquet) ---
+    SILVER_BUCKET: str = Field(default="pulsegrid-bronze")
+    SILVER_BRONZE_PREFIX: str = Field(default="events")
+    SILVER_PREFIX: str = Field(default="silver")
+    SILVER_REJECTED_PREFIX: str = Field(default="silver/_rejected")
+    SILVER_CHECKPOINT_KEY: str = Field(default="silver/_checkpoints/bronze_to_silver_checkpoint.json")
+    SILVER_FULL_REFRESH: bool = Field(default=False)
+
+    # --- Gold marts (Silver -> business facts/dimensions) ---
+    GOLD_BUCKET: str = Field(default="pulsegrid-bronze")
+    GOLD_PREFIX: str = Field(default="gold")
+    GOLD_REJECTED_PREFIX: str = Field(default="gold/_rejected")
+    ANALYTICS_LOCAL_GOLD_ROOT: str = Field(default="backend/data/gold_cache")
+    ANALYTICS_AUTO_SYNC: bool = Field(default=True)
+    ANALYTICS_SYNC_MIN_SECONDS: int = Field(default=30)
+
+    def cors_origins_list(self) -> list[str]:
+        raw = (self.CORS_ORIGINS or "").strip()
+        if not raw:
+            return []
+        if raw == "*":
+            return ["*"]
+        return [x.strip() for x in raw.split(",") if x.strip()]
 
     def resolved_neo4j_database(self) -> str | None:
         """Database name for Bolt `session(database=...)`, or None for server default / home DB."""

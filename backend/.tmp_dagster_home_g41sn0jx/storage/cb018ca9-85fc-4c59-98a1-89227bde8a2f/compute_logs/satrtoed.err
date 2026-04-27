@@ -1,0 +1,2 @@
+2026-04-26 15:05:23,639 [pulsegrid.gold_etl] INFO gold_etl_run_summary {'incident_rows': 0, 'volunteer_rows': 0, 'org_rows': 0, 'dim_time_rows': 0, 'rejected_rows': 0, 'rejected_key': None, 'written_keys': {'fact_incident_lifecycle': [], 'fact_volunteer_performance': [], 'fact_org_capacity': [], 'dim_time': []}}
+2026-04-26 15:05:23,640 [pulsegrid.lineage] INFO lineage_event job=gold_etl status=success inputs=1 outputs=4

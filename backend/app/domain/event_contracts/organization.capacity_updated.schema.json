@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "organization.capacity_updated envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "event_id",
+    "event_type",
+    "event_version",
+    "schema_version",
+    "aggregate_type",
+    "aggregate_id",
+    "enqueued_at",
+    "payload"
+  ],
+  "properties": {
+    "event_id": { "type": "string", "minLength": 1 },
+    "event_type": { "const": "organization.capacity_updated" },
+    "event_version": { "type": "integer", "minimum": 1 },
+    "schema_version": { "type": "integer", "minimum": 1 },
+    "aggregate_type": { "const": "organization" },
+    "aggregate_id": { "type": "string", "minLength": 1 },
+    "enqueued_at": { "type": "string", "minLength": 1 },
+    "payload": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["updated", "occurred_at"],
+      "properties": {
+        "organization_id": { "type": "string", "minLength": 1 },
+        "updated": { "type": "object", "additionalProperties": true },
+        "occurred_at": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}

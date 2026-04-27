@@ -1,0 +1,4 @@
+2026-04-26 15:05:23,633 [pulsegrid.silver_etl] INFO silver_etl_discovery discovered_objects=0 skipped_checkpointed_objects=0 processed_new_objects=0 full_refresh=False
+2026-04-26 15:05:23,644 [pulsegrid.silver_etl] INFO silver_etl_checkpoint_written key=silver/_checkpoints/bronze_to_silver_checkpoint.json processed_keys=0
+2026-04-26 15:05:23,645 [pulsegrid.silver_etl] INFO silver_etl_run_summary {'discovered_objects': 0, 'skipped_checkpointed_objects': 0, 'processed_new_objects': 0, 'bronze_objects_scanned': 0, 'deduped_events': 0, 'incident_rows': 0, 'organization_rows': 0, 'volunteer_rows': 0, 'rejected_rows': 0, 'rejected_key': None, 'written_keys': {'incident_events': [], 'organization_events': [], 'volunteer_events': []}, 'checkpoint_written': 'silver/_checkpoints/bronze_to_silver_checkpoint.json'}
+2026-04-26 15:05:23,645 [pulsegrid.lineage] INFO lineage_event job=silver_etl status=success inputs=1 outputs=3

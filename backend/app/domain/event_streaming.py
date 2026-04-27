@@ -62,7 +62,16 @@ def topic_for_event_type(event_type: str) -> str:
     settings = get_settings()
     if not settings.KAFKA_TOPIC_ROUTING_ENABLED:
         return settings.KAFKA_OUTBOX_TOPIC
-    return EVENT_TOPIC_MAP.get(event_type, settings.KAFKA_OUTBOX_TOPIC)
+    routed = EVENT_TOPIC_MAP.get(event_type, settings.KAFKA_OUTBOX_TOPIC)
+    if routed == TOPIC_INCIDENT_EVENTS:
+        return settings.KAFKA_TOPIC_INCIDENT_EVENTS
+    if routed == TOPIC_ORGANIZATION_EVENTS:
+        return settings.KAFKA_TOPIC_ORGANIZATION_EVENTS
+    if routed == TOPIC_VOLUNTEER_EVENTS:
+        return settings.KAFKA_TOPIC_VOLUNTEER_EVENTS
+    if routed == TOPIC_AUDIT_EVENTS:
+        return settings.KAFKA_TOPIC_AUDIT_EVENTS
+    return settings.KAFKA_OUTBOX_TOPIC
 
 
 def partition_key_for_event(

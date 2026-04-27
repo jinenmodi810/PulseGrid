@@ -80,3 +80,104 @@ class OrganizationIncidentRowDto {
     );
   }
 }
+
+class AnalyticsOverviewDto {
+  const AnalyticsOverviewDto({
+    required this.incidentsTotal,
+    required this.avgTimeToAssignmentSeconds,
+    required this.avgTimeToCompletionSeconds,
+    required this.bedsAvailableTotal,
+    required this.tasksCompletedTotal,
+  });
+
+  final int incidentsTotal;
+  final double? avgTimeToAssignmentSeconds;
+  final double? avgTimeToCompletionSeconds;
+  final int? bedsAvailableTotal;
+  final int? tasksCompletedTotal;
+
+  factory AnalyticsOverviewDto.fromJson(Map<String, dynamic> json) {
+    final incidentOps = (json['incident_operations'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final volunteerOps = (json['volunteer_performance'] as Map?)?.cast<String, dynamic>() ?? const {};
+    final orgOps = (json['organization_capacity'] as Map?)?.cast<String, dynamic>() ?? const {};
+    return AnalyticsOverviewDto(
+      incidentsTotal: (incidentOps['incidents_total'] as num?)?.toInt() ?? 0,
+      avgTimeToAssignmentSeconds: (incidentOps['avg_time_to_assignment_seconds'] as num?)?.toDouble(),
+      avgTimeToCompletionSeconds: (incidentOps['avg_time_to_completion_seconds'] as num?)?.toDouble(),
+      bedsAvailableTotal: (orgOps['beds_available_total'] as num?)?.toInt(),
+      tasksCompletedTotal: (volunteerOps['tasks_completed_total'] as num?)?.toInt(),
+    );
+  }
+}
+
+class IncidentsByZoneDto {
+  const IncidentsByZoneDto({
+    required this.zoneId,
+    required this.incidents,
+  });
+
+  final String zoneId;
+  final int incidents;
+
+  factory IncidentsByZoneDto.fromJson(Map<String, dynamic> json) {
+    return IncidentsByZoneDto(
+      zoneId: json['zone_id'] as String? ?? '',
+      incidents: (json['incidents'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+class TimeToResponseDto {
+  const TimeToResponseDto({
+    this.avgTimeToAssignmentSeconds,
+    this.avgTimeToAcceptanceSeconds,
+    this.avgTimeToCompletionSeconds,
+  });
+
+  final double? avgTimeToAssignmentSeconds;
+  final double? avgTimeToAcceptanceSeconds;
+  final double? avgTimeToCompletionSeconds;
+
+  factory TimeToResponseDto.fromJson(Map<String, dynamic> json) {
+    return TimeToResponseDto(
+      avgTimeToAssignmentSeconds: (json['avg_time_to_assignment_seconds'] as num?)?.toDouble(),
+      avgTimeToAcceptanceSeconds: (json['avg_time_to_acceptance_seconds'] as num?)?.toDouble(),
+      avgTimeToCompletionSeconds: (json['avg_time_to_completion_seconds'] as num?)?.toDouble(),
+    );
+  }
+}
+
+class OrganizationCapacityAnalyticsDto {
+  const OrganizationCapacityAnalyticsDto({
+    required this.organizationId,
+    this.capturedAt,
+    this.bedsAvailable,
+    this.oxygenUnits,
+    this.ambulancesAvailable,
+    this.shelterUnits,
+    this.foodCapacityUnits,
+    this.rescueUnits,
+  });
+
+  final String organizationId;
+  final String? capturedAt;
+  final int? bedsAvailable;
+  final int? oxygenUnits;
+  final int? ambulancesAvailable;
+  final int? shelterUnits;
+  final int? foodCapacityUnits;
+  final int? rescueUnits;
+
+  factory OrganizationCapacityAnalyticsDto.fromJson(Map<String, dynamic> json) {
+    return OrganizationCapacityAnalyticsDto(
+      organizationId: json['organization_id'] as String? ?? '',
+      capturedAt: json['captured_at'] as String?,
+      bedsAvailable: (json['beds_available'] as num?)?.toInt(),
+      oxygenUnits: (json['oxygen_units'] as num?)?.toInt(),
+      ambulancesAvailable: (json['ambulances_available'] as num?)?.toInt(),
+      shelterUnits: (json['shelter_units'] as num?)?.toInt(),
+      foodCapacityUnits: (json['food_capacity_units'] as num?)?.toInt(),
+      rescueUnits: (json['rescue_units'] as num?)?.toInt(),
+    );
+  }
+}

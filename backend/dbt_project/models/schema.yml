@@ -1,0 +1,19 @@
+version: 2
+
+models:
+  - name: stg_gold_incident_lifecycle
+    description: "Staging model over Gold incident lifecycle data."
+    columns:
+      - name: incident_id
+        tests:
+          - not_null
+      - name: created_at
+        tests:
+          - not_null
+
+  - name: metrics_incident_response
+    description: "Semantic metric model for response-time KPIs by zone."
+    columns:
+      - name: zone_id
+        tests:
+          - not_null

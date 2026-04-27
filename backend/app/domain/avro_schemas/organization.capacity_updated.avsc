@@ -1,0 +1,31 @@
+{
+  "type": "record",
+  "name": "OrganizationCapacityUpdatedEnvelope",
+  "namespace": "pulsegrid.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_type", "type": "string"},
+    {"name": "event_version", "type": "int"},
+    {"name": "schema_version", "type": "int"},
+    {"name": "aggregate_type", "type": "string"},
+    {"name": "aggregate_id", "type": "string"},
+    {"name": "enqueued_at", "type": "string"},
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "OrganizationCapacityUpdatedPayload",
+        "fields": [
+          {"name": "organization_id", "type": "string"},
+          {"name": "beds_available", "type": "int"},
+          {"name": "oxygen_units", "type": "int"},
+          {"name": "ambulances_available", "type": "int"},
+          {"name": "shelter_units", "type": "int"},
+          {"name": "food_capacity_units", "type": "int"},
+          {"name": "rescue_units", "type": "int"},
+          {"name": "occurred_at", "type": "string"}
+        ]
+      }
+    }
+  ]
+}

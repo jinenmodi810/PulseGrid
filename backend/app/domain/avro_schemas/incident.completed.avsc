@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "IncidentCompletedEnvelope",
+  "namespace": "pulsegrid.events",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "event_type", "type": "string"},
+    {"name": "event_version", "type": "int"},
+    {"name": "schema_version", "type": "int"},
+    {"name": "aggregate_type", "type": "string"},
+    {"name": "aggregate_id", "type": "string"},
+    {"name": "enqueued_at", "type": "string"},
+    {
+      "name": "payload",
+      "type": {
+        "type": "record",
+        "name": "IncidentCompletedPayload",
+        "fields": [
+          {"name": "incident_id", "type": "string"},
+          {"name": "volunteer_id", "type": "string"},
+          {"name": "status", "type": "string"},
+          {"name": "occurred_at", "type": "string"}
+        ]
+      }
+    }
+  ]
+}

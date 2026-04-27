@@ -9,6 +9,7 @@ import '../../../../app/theme/app_text_styles.dart';
 import '../../../auth/presentation/utils/session_navigation.dart';
 import '../../../coordinator/presentation/providers/dashboard_realtime_provider.dart';
 import '../../../coordinator/presentation/widgets/dashboard_summary_strip.dart';
+import '../../data/organization_dtos.dart';
 import '../providers/organization_providers.dart';
 import '../providers/organization_realtime_provider.dart';
 
@@ -21,6 +22,7 @@ class OrganizationDashboardScreen extends ConsumerWidget {
     ref.watch(organizationRealtimeBySessionProvider);
     final overview = ref.watch(organizationOverviewProvider);
     final incidents = ref.watch(organizationIncidentsProvider);
+    final analytics = ref.watch(organizationAnalyticsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.surfaceCanvas,
@@ -128,6 +130,129 @@ class OrganizationDashboardScreen extends ConsumerWidget {
           const DashboardSummaryStrip(),
           const SizedBox(height: 18),
           Text(
+            'Operational analytics',
+            style: AppTextStyles.titleMedium().copyWith(fontSize: 16),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          analytics.when(
+            loading: () => const _AnalyticsLoading(),
+            error: (e, _) {
+              final msg = e.toString().replaceFirst('Exception: ', '');
+              final friendly = msg.toLowerCase().contains('analytics will appear after operational data is processed')
+                  ? 'Analytics will appear after operational data is processed.'
+                  : msg;
+              return _AnalyticsError(message: friendly);
+            },
+            data: (a) {
+              final latestCap = a.capacity.isNotEmpty ? a.capacity.first : null;
+              return Column(
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Total incidents',
+                          value: '${a.overview.incidentsTotal}',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Avg assign time',
+                          value: _fmtDurationSeconds(a.overview.avgTimeToAssignmentSeconds),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Avg completion',
+                          value: _fmtDurationSeconds(a.overview.avgTimeToCompletionSeconds),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Open assigned',
+                          value: overview.maybeWhen(
+                            data: (o) => '${o.assignedIncidentsOpen}',
+                            orElse: () => '-',
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Beds available',
+                          value: '${latestCap?.bedsAvailable ?? '-'}',
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: _KpiCard(
+                          title: 'Oxygen units',
+                          value: '${latestCap?.oxygenUnits ?? '-'}',
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    title: 'Incidents by zone',
+                    child: a.incidentsByZone.isEmpty
+                        ? Text(
+                            'No zone-level incident analytics yet.',
+                            style: AppTextStyles.bodyMuted(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : _IncidentsByZoneChart(items: a.incidentsByZone),
+                  ),
+                  const SizedBox(height: 10),
+                  _SectionCard(
+                    title: 'Time to response',
+                    child: Column(
+                      children: [
+                        _kv('Assignment', _fmtDurationSeconds(a.timeToResponse.avgTimeToAssignmentSeconds)),
+                        _kv('Acceptance', _fmtDurationSeconds(a.timeToResponse.avgTimeToAcceptanceSeconds)),
+                        _kv('Completion', _fmtDurationSeconds(a.timeToResponse.avgTimeToCompletionSeconds)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _SectionCard(
+                    title: 'Organization capacity analytics',
+                    child: latestCap == null
+                        ? Text(
+                            'No capacity analytics yet.',
+                            style: AppTextStyles.bodyMuted(),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          )
+                        : Column(
+                            children: [
+                              _kv('Captured', latestCap.capturedAt ?? '-'),
+                              _kv('Beds', '${latestCap.bedsAvailable ?? '-'}'),
+                              _kv('Oxygen', '${latestCap.oxygenUnits ?? '-'}'),
+                              _kv('Ambulances', '${latestCap.ambulancesAvailable ?? '-'}'),
+                            ],
+                          ),
+                  ),
+                ],
+              );
+            },
+          ),
+          const SizedBox(height: 18),
+          Text(
             'Shortcuts',
             style: AppTextStyles.titleMedium().copyWith(fontSize: 16),
             maxLines: 1,
@@ -202,6 +327,207 @@ class OrganizationDashboardScreen extends ConsumerWidget {
           ),
         ],
         ),
+      ),
+    );
+  }
+}
+
+String _fmtDurationSeconds(double? seconds) {
+  if (seconds == null) return '-';
+  final s = seconds.round();
+  if (s < 60) return '${s}s';
+  final min = (s / 60).floor();
+  final rem = s % 60;
+  return rem == 0 ? '${min}m' : '${min}m ${rem}s';
+}
+
+Widget _kv(String k, String v) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Text(
+            k,
+            style: AppTextStyles.bodyMuted(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          v,
+          style: AppTextStyles.body().copyWith(fontWeight: FontWeight.w600),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    ),
+  );
+}
+
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({required this.title, required this.value});
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.bodyMuted(),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: AppTextStyles.titleMedium().copyWith(fontSize: 18, fontWeight: FontWeight.w700),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: AppTextStyles.titleMedium().copyWith(fontSize: 15),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _IncidentsByZoneChart extends StatelessWidget {
+  const _IncidentsByZoneChart({required this.items});
+
+  final List<IncidentsByZoneDto> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxIncidents = items.fold<int>(0, (m, e) => e.incidents > m ? e.incidents : m);
+    final safeMax = maxIncidents <= 0 ? 1 : maxIncidents;
+    return Column(
+      children: items
+          .take(6)
+          .map(
+            (z) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          z.zoneId,
+                          style: AppTextStyles.body(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '${z.incidents}',
+                        style: AppTextStyles.body().copyWith(fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: z.incidents / safeMax,
+                      minHeight: 8,
+                      backgroundColor: AppColors.surfaceCanvas,
+                      valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+}
+
+class _AnalyticsLoading extends StatelessWidget {
+  const _AnalyticsLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: const Center(child: CircularProgressIndicator()),
+    );
+  }
+}
+
+class _AnalyticsError extends StatelessWidget {
+  const _AnalyticsError({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceCard,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.borderSubtle),
+      ),
+      child: Text(
+        message,
+        style: AppTextStyles.bodyMuted(),
       ),
     );
   }

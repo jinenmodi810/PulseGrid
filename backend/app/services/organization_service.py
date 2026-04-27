@@ -216,7 +216,7 @@ def update_capacity(org_id: str, body: CapacityUpdateRequest, db: Session) -> di
         event_type=T.ORGANIZATION_CAPACITY_UPDATED,
         aggregate_type=T.AGG_ORGANIZATION,
         aggregate_id=str(oid),
-        payload={"updated": props, "occurred_at": ts},
+        payload={"organization_id": str(oid), "updated": props, "occurred_at": ts},
     )
     db.commit()
     db.refresh(org)
